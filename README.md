@@ -39,7 +39,7 @@ npm start
 ```
 
 ## 🌐 Live Demo
-- **Frontend**: https://ubiquitous-sfogliatella-1b99c8.netlify.app
+- **Frontend**: https://vtu-major-project.netlify.app
 - **Backend API**: https://ai-content-moderation.onrender.com
 
 ## 📸 Screenshots
