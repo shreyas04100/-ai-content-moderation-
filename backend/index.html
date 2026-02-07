@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Moderation Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .card { background: white; border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 15px; background: #f0f0f0; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s; }
+        .tab.active { background: #667eea; color: white; }
+        .tab:hover { transform: translateY(-2px); }
+        textarea { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; resize: vertical; min-height: 120px; }
+        input[type="text"] { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; margin-bottom: 15px; }
+        button { width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        button:hover { background: #5568d3; transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .result { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; }
+        .result.show { display: block; }
+        .result.safe { background: #d4edda; border: 2px solid #28a745; }
+        .result.warning { background: #fff3cd; border: 2px solid #ffc107; }
+        .result.danger { background: #f8d7da; border: 2px solid #dc3545; }
+        .result h3 { margin-bottom: 10px; }
+        .result-item { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px; }
+        .label { font-weight: bold; display: inline-block; width: 150px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ AI Content Moderation</h1>
+            <p>Detect Hate Speech, Fake News & Harmful Content</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('hate')">Hate Speech Detection</button>
+                <button class="tab" onclick="switchTab('fake')">Fake News Detection</button>
+            </div>
+
+            <!-- Hate Speech Tab -->
+            <div id="hate-tab" class="tab-content active">
+                <h2 style="margin-bottom: 20px;">Analyze Text for Hate Speech</h2>
+                <textarea id="hate-text" placeholder="Enter text to analyze for hate speech, toxicity, or offensive content..."></textarea>
+                <button onclick="analyzeHateSpeech()" style="margin-top: 15px;">Analyze Text</button>
+                <div id="hate-result" class="result"></div>
+            </div>
+
+            <!-- Fake News Tab -->
+            <div id="fake-tab" class="tab-content">
+                <h2 style="margin-bottom: 20px;">Check for Fake News</h2>
+                <input type="text" id="news-title" placeholder="Enter news headline or title...">
+                <textarea id="news-content" placeholder="Enter news content or article text..."></textarea>
+                <button onclick="checkFakeNews()" style="margin-top: 15px;">Check News</button>
+                <div id="fake-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5001';
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'hate') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('hate-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('fake-tab').classList.add('active');
+            }
+        }
+
+        async function analyzeHateSpeech() {
+            const text = document.getElementById('hate-text').value;
+            const resultDiv = document.getElementById('hate-result');
+            
+            if (!text.trim()) {
+                alert('Please enter some text to analyze');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/analyze-text`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const data = await response.json();
+                const result = data.hate_speech;
+
+                let resultClass = result.is_hate_speech ? 'danger' : 'safe';
+                let icon = result.is_hate_speech ? '⚠️' : '✅';
+
+                resultDiv.className = `result ${resultClass} show`;
+                resultDiv.innerHTML = `
+                    <h3>${icon} Analysis Result</h3>
+                    <div class="result-item">
+                        <span class="label">Status:</span>
+                        <strong>${result.is_hate_speech ? 'HATE SPEECH DETECTED' : 'CONTENT IS SAFE'}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Confidence:</span>
+                        ${(result.confidence * 100).toFixed(0)}%
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Category:</span>
+                        ${result.category}
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Severity:</span>
+                        ${result.severity}
+                    </div>
+                    ${result.keywords_found && result.keywords_found.length > 0 ? `
+                    <div class="result-item">
+                        <span class="label">Keywords Found:</span>
+                        ${result.keywords_found.join(', ')}
+                    </div>
+                    ` : ''}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result danger show';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>Failed to analyze text. Make sure the server is running.</p>`;
+            }
+        }
+
+        async function checkFakeNews() {
+            const title = document.getElementById('news-title').value;
+            const content = document.getElementById('news-content').value;
+            const resultDiv = document.getElementById('fake-result');
+            
+            if (!title.trim() && !content.trim()) {
+                alert('Please enter a title or content');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/check-fake-news`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+
+                const data = await response.json();
+                const result = data.result;
+
+                let resultClass = result.is_fake ? 'danger' : result.confidence > 0.5 ? 'warning' : 'safe';
+                let icon = result.is_fake ? '🚫' : result.confidence > 0.5 ? '⚠️' : '✅';
+
+                resultDiv.className = `result ${resultClass} show`;
+                resultDiv.innerHTML = `
+                    <h3>${icon} Analysis Result</h3>
+                    <div class="result-item">
+                        <span class="label">Status:</span>
+                        <strong>${result.is_fake ? 'LIKELY FAKE NEWS' : 'APPEARS CREDIBLE'}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Confidence:</span>
+                        ${(result.confidence * 100).toFixed(0)}%
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Category:</span>
+                        ${result.category}
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Credibility Score:</span>
+                        ${(result.credibility_score * 100).toFixed(0)}%
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Clickbait Indicators:</span>
+                        ${result.clickbait_indicators}
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Recommendation:</span>
+                        ${result.recommendation}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result danger show';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>Failed to check news. Make sure the server is running.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
