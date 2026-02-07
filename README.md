@@ -39,7 +39,8 @@ npm start
 ```
 
 ## 🌐 Live Demo
-[Add your deployed URL here]
+- **Frontend**: https://ubiquitous-sfogliatella-1b99c8.netlify.app
+- **Backend API**: https://ai-content-moderation.onrender.com
 
 ## 📸 Screenshots
 [Add screenshots of your project]
