@@ -1,13 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from dotenv import load_dotenv
 
 # Import moderation modules
 from modules.hate_speech_detector import HateSpeechDetector
 from modules.fake_news_detector import FakeNewsDetector
-
-load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
